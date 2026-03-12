@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test52 – Bank Loan Application Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+      <link rel="icon" type="image/jpeg" href="favicon.jpg" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="brand">
+        <div class="logo">
+          <img src="logo.jpg" alt="Test52 Logo" />
+        </div>
+        <div class="brand-text">
+          <p class="eyebrow">Digital Loan Application Center</p>
+          <h1>Loan Application Submission</h1>
+          <p class="subhead">
+            Fill in your details, attach the relevant document, and the system will forward your loan application for quick processing.
+          </p>
+        </div>
+      </header>
+
+      <form
+        id="claim-form"
+        class="card"
+        autocomplete="off"
+        data-lpignore="true"
+        data-1p-ignore="true"
+        data-form-type="other"
+        data-bwignore="true"
+      >
+        <div class="scenario-bar">
+          <span class="scenario-label">Quick fill:</span>
+          <button type="button" class="scenario-btn scenario-btn--bad" id="scenario-bad">Sarah Mitchell — Fails</button>
+          <button type="button" class="scenario-btn scenario-btn--good" id="scenario-good">James Parker — Approved</button>
+        </div>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>First Name</span>
+            <input
+              type="text"
+              name="first_name"
+              autocomplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+              data-bwignore="true"
+              required
+              placeholder="e.g. John"
+            />
+          </label>
+          <label class="field">
+            <span>Last Name</span>
+            <input
+              type="text"
+              name="last_name"
+              autocomplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+              data-bwignore="true"
+              required
+              placeholder="e.g. Smith"
+            />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Contact Email</span>
+          <input
+            type="email"
+            name="email"
+            autocomplete="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+            data-bwignore="true"
+            required
+            placeholder="name@example.com"
+          />
+        </label>
+
+        <div class="field">
+          <span>Loan Application Document <span class="required-star">*</span></span>
+          <label id="drop-zone" class="drop-zone">
+            <input
+              id="claim_file"
+              name="claim_file"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              required
+            />
+            <div class="drop-content">
+              <div class="drop-icon">⇣</div>
+              <div>
+                <strong>Drag file here</strong>
+                <p>or click to browse from your computer</p>
+              </div>
+            </div>
+            <div class="file-meta">
+              <span id="file-name">No file selected</span>
+              <span id="file-size">—</span>
+            </div>
+          </label>
+          <p class="hint">Allowed files: PDF, JPG, PNG or Word. Maximum size 4MB.</p>
+        </div>
+
+        <button id="submit-btn" class="submit" type="submit">
+          <span>Submit Request</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+
+        <div id="status" class="status" role="status" aria-live="polite">
+          <span class="status-check" aria-hidden="true">
+            <svg viewBox="0 0 52 52" role="presentation">
+              <circle cx="26" cy="26" r="24" fill="none" />
+              <path d="M15 27l8 8 14-16" fill="none" />
+            </svg>
+          </span>
+          <span id="status-text"></span>
+        </div>
+      </form>
+
+      <p class="footnote">
+        Documents are stored securely and forwarded directly to the loans team.
+      </p>
+    </main>
+
+    <div id="success-modal" class="success-modal" aria-hidden="true">
+      <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="success-title">
+        <div class="success-icon" aria-hidden="true">
+          <svg viewBox="0 0 120 120" role="presentation">
+            <circle cx="60" cy="60" r="54" fill="none" />
+            <path d="M36 64l16 16 32-36" fill="none" />
+          </svg>
+        </div>
+        <h2 id="success-title">Request submitted successfully</h2>
+        <p>We received your documents and are forwarding them to the loans team for processing.</p>
+        <a href="https://wonderful.app.demo.wonderful.ai/activities?tab=tasks" target="_blank" rel="noopener noreferrer" class="agent-activity-link">
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Track your request in the Agent Console
+        </a>
+        <button id="success-close" class="ghost" type="button">Submit another request</button>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+      (() => {
+        const s = document.createElement('script');
+        s.src = 'https://wonderful.app.demo.wonderful.ai/embed/wonderful-chat.js';
+        s.onload = () => {
+          new window.WonderfulChat({
+            environment: "wonderful.api.demo.wonderful.ai",
+            agentId: "a9086df7-89fb-4b16-a984-d5d94a1c2077",
+
+            // Core settings
+            agentName: 'Loan Assistant',
+            buttonText: 'Chat with Agent',
+            placeholderText: 'Type a message here...',
+            isRTL: false,
+
+            // Main theme colors
+            primaryColor: '#1a6fd4',
+            accentColor: '#a8c8f0',
+            textColor: '#1a1a1a',
+
+            // Chat appearance
+            headerBgColor: '#1a6fd4',
+            headerTextColor: '#ffffff',
+
+            // Message bubbles
+            userBubbleColor: '#1a6fd4',
+            userTextColor: '#ffffff',
+            agentBubbleColor: '#f5f5f5',
+            agentTextColor: '#1a1a1a',
+
+            // Background colors
+            windowBgColor: '#ffffff',
+            messagesBgColor: '#ffffff',
+            inputBgColor: '#fafafa',
+
+            // Status indicators
+            statusColor: '#1a6fd4',
+            errorColor: '#d32f2f',
+
+            // Optional logo (can be removed)
+            logoUrl: 'logo.jpg'
+          });
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  
+<!-- BackOffice Platform edit shortcut -->
+<div id="_plt_fab_root" style="position:fixed;top:20px;right:20px;z-index:2147483647;font-family:system-ui,-apple-system,sans-serif">
+  <button id="_plt_fab_btn" title="Edit this site" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.1);border-radius:24px;box-shadow:0 2px 12px rgba(0,0,0,0.15);font-size:13px;font-weight:500;color:#374151;cursor:pointer;backdrop-filter:blur(8px);transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.22)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.15)';this.style.transform=''"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit site</button>
+  <div id="_plt_overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:min(420px,90vw);box-shadow:0 8px 40px rgba(0,0,0,0.22)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <strong style="font-size:15px">Edit this site with AI</strong>
+        <button id="_plt_close" style="background:none;border:none;cursor:pointer;font-size:20px;color:#6b7280;line-height:1">×</button>
+      </div>
+      <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px">Describe your changes</label>
+      <textarea id="_plt_prompt" rows="4" placeholder="e.g. Change the button color to green and update the title to say Welcome" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:12px"></textarea>
+      <button id="_plt_go" style="width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer">Open in Platform →</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var base='https://backoffice-platform-generator.vercel.app',repo="benavitouv/test52-loan-demo",name="Test52";
+  var btn=document.getElementById('_plt_fab_btn');
+  var ov=document.getElementById('_plt_overlay');
+  var cl=document.getElementById('_plt_close');
+  var go=document.getElementById('_plt_go');
+  var pr=document.getElementById('_plt_prompt');
+  function open(){ov.style.display='flex';pr.focus();}
+  function close(){ov.style.display='none';}
+  btn.addEventListener('click',open);
+  cl.addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  go.addEventListener('click',function(){
+    var p=pr.value.trim();
+    var url=base+'/?editRepo='+encodeURIComponent(repo)+'&customerName='+encodeURIComponent(name)+(p?'&editPrompt='+encodeURIComponent(p):'');
+    window.open(url,'_blank','noopener');
+    close();
+  });
+})();
+</script>
+</body>
+</html>

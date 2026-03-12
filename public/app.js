@@ -1,0 +1,220 @@
+// ── Scenario quick-fill ──
+const BAD_SCENARIO  = { first: 'Sarah', last: 'Mitchell', email: 'sarah.mitchell@example.com' };
+const GOOD_SCENARIO = { first: 'James', last: 'Parker',   email: 'jamesp@example.com' };
+
+const form = document.querySelector('#claim-form');
+const dropZone = document.querySelector('#drop-zone');
+const fileInput = document.querySelector('#claim_file');
+const fileName = document.querySelector('#file-name');
+const fileSize = document.querySelector('#file-size');
+const statusEl = document.querySelector('#status');
+const statusText = document.querySelector('#status-text');
+const submitBtn = document.querySelector('#submit-btn');
+const successModal = document.querySelector('#success-modal');
+const successClose = document.querySelector('#success-close');
+const agentActivityLink = document.querySelector('.agent-activity-link');
+
+let selectedFile = null;
+
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
+
+const formatBytes = (bytes) => {
+  if (!bytes) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, exponent);
+  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+};
+
+const updateFileMeta = (file) => {
+  if (!file) {
+    fileName.textContent = 'No file selected';
+    fileSize.textContent = '—';
+    return;
+  }
+  fileName.textContent = file.name;
+  fileSize.textContent = formatBytes(file.size);
+};
+
+const setStatus = (type, message) => {
+  statusEl.dataset.type = type;
+  statusText.textContent = message;
+};
+
+const showSuccessModal = (taskId) => {
+  if (agentActivityLink && taskId) {
+    agentActivityLink.href = `https://wonderful.app.demo.wonderful.ai/activities/tasks/${taskId}?tab=tasks`;
+  }
+  successModal.classList.add('is-visible');
+  successModal.setAttribute('aria-hidden', 'false');
+};
+
+const hideSuccessModal = () => {
+  successModal.classList.remove('is-visible');
+  successModal.setAttribute('aria-hidden', 'true');
+};
+
+// ── Inline field validation ──
+const showFieldError = (el, message) => {
+  el.classList.add('is-invalid');
+  let err = el.parentElement.querySelector('.field-error');
+  if (!err) {
+    err = document.createElement('span');
+    err.className = 'field-error';
+    el.insertAdjacentElement('afterend', err);
+  }
+  err.textContent = message;
+};
+
+const clearFieldError = (el) => {
+  el.classList.remove('is-invalid');
+  const err = el.parentElement.querySelector('.field-error');
+  if (err) err.textContent = '';
+};
+
+const validateForm = (file) => {
+  let valid = true;
+  [
+    { name: 'first_name', label: 'First name' },
+    { name: 'last_name',  label: 'Last name' },
+    { name: 'email',      label: 'Email address' },
+  ].forEach(({ name, label }) => {
+    const input = form.querySelector(`[name="${name}"]`);
+    if (!input.value.trim()) {
+      showFieldError(input, `${label} is required.`);
+      valid = false;
+    } else {
+      clearFieldError(input);
+    }
+  });
+  if (!file) {
+    showFieldError(dropZone, 'Please attach a file before submitting.');
+    valid = false;
+  } else {
+    clearFieldError(dropZone);
+  }
+  return valid;
+};
+
+form.querySelectorAll('input[required]').forEach(input => {
+  input.addEventListener('input', () => clearFieldError(input));
+});
+
+const setFile = (file) => {
+  selectedFile = file;
+  updateFileMeta(file);
+  if (file) clearFieldError(dropZone);
+};
+
+const syncInputFiles = (file) => {
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(file);
+  fileInput.files = dataTransfer.files;
+};
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    setFile(file);
+  }
+});
+
+['dragenter', 'dragover'].forEach((eventName) => {
+  dropZone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.add('is-dragover');
+  });
+});
+
+['dragleave', 'dragend', 'drop'].forEach((eventName) => {
+  dropZone.addEventListener(eventName, () => {
+    dropZone.classList.remove('is-dragover');
+  });
+});
+
+dropZone.addEventListener('drop', (event) => {
+  event.preventDefault();
+  const file = event.dataTransfer?.files?.[0];
+  if (file) {
+    syncInputFiles(file);
+    setFile(file);
+  }
+});
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  setStatus('', '');
+  hideSuccessModal();
+
+  const file = selectedFile || fileInput.files?.[0];
+
+  if (!validateForm(file)) return;
+
+  if (file.size > MAX_FILE_SIZE) {
+    setStatus('error', 'File is too large. Maximum allowed size is 4MB. Please compress the file and try again.');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  form.classList.add('is-loading');
+
+  try {
+    // Step 1: Upload file via server (server handles storage upload)
+    setStatus('info', 'Uploading document...');
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+    const uploadData = await uploadRes.json().catch(() => ({}));
+    if (!uploadRes.ok || !uploadData.ok) {
+      throw new Error(uploadData?.message || 'Failed to upload document.');
+    }
+    const { attachmentId } = uploadData;
+
+    // Step 2: Submit form with attachment ID only (no file)
+    setStatus('info', 'Submitting loan application...');
+    const formData = new FormData(form);
+    formData.delete('claim_file');
+    formData.set('attachment_id', attachmentId);
+
+    const response = await fetch('/api/submit', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data?.message || 'An error occurred while submitting the request.');
+    }
+
+    setStatus(
+      'success',
+      'Loan application submitted successfully! The loans team will get back to you shortly.'
+    );
+    form.reset();
+    setFile(null);
+    showSuccessModal(data.webhook?.data?.id);
+  } catch (error) {
+    setStatus('error', error instanceof Error ? error.message : 'An unexpected error occurred.');
+  } finally {
+    submitBtn.disabled = false;
+    form.classList.remove('is-loading');
+  }
+});
+
+const fillScenario = (scenario) => {
+  form.querySelector('[name="first_name"]').value = scenario.first;
+  form.querySelector('[name="last_name"]').value = scenario.last;
+  form.querySelector('[name="email"]').value = scenario.email;
+};
+
+document.querySelector('#scenario-bad').addEventListener('click', () => fillScenario(BAD_SCENARIO));
+document.querySelector('#scenario-good').addEventListener('click', () => fillScenario(GOOD_SCENARIO));
+
+successClose.addEventListener('click', () => {
+  hideSuccessModal();
+  setStatus('', '');
+});
